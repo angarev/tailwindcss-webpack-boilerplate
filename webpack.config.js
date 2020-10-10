@@ -1,14 +1,14 @@
+const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const ImageminPlugin = require('imagemin-webpack-plugin').default;
-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const path = require('path');
+const imageminMozjpeg = require('imagemin-mozjpeg');
 
 module.exports = {
 	mode: 'development',
-	entry: './src/js/index.js',
+	entry: path.resolve(__dirname, 'src/js/app.js'),
 	output: {
 		path: path.resolve(__dirname, './dist'),
-		filename: 'bundle.js',
+		filename: 'js/bundle.js',
 	},
 	module: {
 		rules: [
@@ -32,7 +32,8 @@ module.exports = {
 				],
 			},
 			{
-				test: /\.(scss|sass|css)$/,
+				test: /\.css$/i,
+				exclude: /node_modules/,
 				use: [
 					'style-loader',
 					{
@@ -40,22 +41,32 @@ module.exports = {
 						options: { importLoaders: 1 },
 					},
 					'postcss-loader',
-					'sass-loader',
 				],
 			},
 			{
-				test: /\.(png|svg|jpg|gif)$/,
-				use: ['file-loader'],
+				test: /\.(png|jpe?g|gif)$/i,
+				loader: 'file-loader',
+				options: {
+					outputPath: './images',
+					name: '[name].[ext]',
+					context: 'src',
+				},
 			},
 			{
 				test: /\.(woff|woff2|eot|ttf|otf)$/,
-				use: ['file-loader'],
+				loader: 'file-loader',
+				options: {
+					outputPath: './fonts',
+					context: 'src',
+				},
 			},
 		],
 	},
 	devServer: {
+		contentBase: path.resolve(__dirname, 'src'),
 		watchContentBase: true,
-		contentBase: path.resolve(__dirname, 'dist'),
+		hot: true,
+		port: 9000,
 		open: true,
 	},
 	plugins: [
@@ -64,15 +75,10 @@ module.exports = {
 			inject: true,
 			filename: 'index.html',
 		}),
-		new MiniCssExtractPlugin({
-			filename: '[name].css',
-			chunkFilename: '[id].css',
-		}),
 		new ImageminPlugin({
 			disable: process.env.NODE_ENV !== 'production',
-			pngquant: {
-				quality: '95-100',
-			},
+			pngquant: { quality: [0.5, 0.5] },
+			plugins: [imageminMozjpeg({ quality: 50 })],
 		}),
 	],
 };
